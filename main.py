@@ -108,8 +108,11 @@ class ChatRepository:
             raise e
         
     def read(self, chat_id):
-        return self.session.query(Chat).filter_by(id=chat_id).first()
-
+        try:
+            return self.session.query(Chat).filter_by(id=chat_id).first()
+        except Exception as e:
+            raise e
+        
     def update(self, chat):
         try:
             self.session.merge(chat)
