@@ -53,25 +53,29 @@ class UserRepository:
             raise e
         
     def get_chats_with_user(self, user_id, status=None):
-        query = self.session.query(Chat, User.username)\
-            .join(UserChat, Chat.id == UserChat.chat_id)\
-            .join(User, UserChat.user_id == User.id)\
-            .filter(UserChat.user_id == user_id)
+        try:
+            query = self.session.query(Chat, User.username)\
+                .join(UserChat, Chat.id == UserChat.chat_id)\
+                .join(User, UserChat.user_id == User.id)\
+                .filter(UserChat.user_id == user_id)
 
-        if status is not None:
-            query = query.filter(Chat.status == status)
+            if status is not None:
+                query = query.filter(Chat.status == status)
 
-        result = query.all()
+            result = query.all()
 
-        chats_with_users = [UserChatsSchema(
-            chat_id=chat.id,
-            chat_name=chat.name,
-            status=chat.status,
-            user_id=user.id,
-            username=user.username
-        ) for chat, user in result]
+            chats_with_users = [UserChatsSchema(
+                chat_id=chat.id,
+                chat_name=chat.name,
+                status=chat.status,
+                user_id=user.id,
+                username=user.username
+            ) for chat, user in result]
 
-        return ChatWithUsersResponse(chats=chats_with_users)
+            return ChatWithUsersResponse(chats=chats_with_users)
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def update(self, user):
         try:
@@ -195,30 +199,38 @@ class MessagesRepository:
         self.db_session = db_session
 
     def create(self, message):
-        self.db_session.add(message)
-        self.db_session.commit()
+        try:
+            self.db_session.add(message)
+            self.db_session.commit()
 
-        chat_id = message.chat_id
-        user_chat_alias = aliased(UserChat)
-        update_statement = update(UserChat).where(UserChat.chat_id == chat_id).values(
-            message_count=UserChat.message_count + 1
-        )
+            chat_id = message.chat_id
+            user_chat_alias = aliased(UserChat)
+            update_statement = update(UserChat).where(UserChat.chat_id == chat_id).values(
+                message_count=UserChat.message_count + 1
+            )
 
-        self.db_session.execute(update_statement)
-        self.db_session.commit()
+            self.db_session.execute(update_statement)
+            self.db_session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def delete(self, message):
-        self.db_session.delete(message)
-        self.db_session.commit()
+        try:
+            self.db_session.delete(message)
+            self.db_session.commit()
 
-        chat_id = message.chat_id
-        user_chat_alias = aliased(UserChat)
-        update_statement = update(UserChat).where(UserChat.chat_id == chat_id).values(
-            message_count=UserChat.message_count - 1
-        )
+            chat_id = message.chat_id
+            user_chat_alias = aliased(UserChat)
+            update_statement = update(UserChat).where(UserChat.chat_id == chat_id).values(
+                message_count=UserChat.message_count - 1
+            )
 
-        self.db_session.execute(update_statement)
-        self.db_session.commit()
+            self.db_session.execute(update_statement)
+            self.db_session.commit()
+        except Exception as e:
+            self.session.rollback()
+            raise e
 
     def get_messages(self, sender_id=None, receiver_id=None, time_delivered=None):
         try:
