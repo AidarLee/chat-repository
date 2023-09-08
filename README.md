@@ -13,4 +13,5 @@
 
   
 # chat-repository
-![image](https://github.com/AidarLee/chat-repository/assets/74945787/fc24280b-aae2-4b20-8238-e354ca986d37)
+![image](https://github.com/AidarLee/chat-repository/assets/74945787/8b22ecb9-00da-4bf2-bb4d-59c235f72913)
+
